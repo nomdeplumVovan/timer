@@ -37,6 +37,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   resetTimer() {
     this.title = 0;
+    clearInterval(this.timer);
+    this.disable = false;
   }
 
   stopTimer() {
