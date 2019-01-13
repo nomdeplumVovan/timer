@@ -16,7 +16,10 @@ h1{
   margin: 20px;
 }
 button{
-background: linear-gradient(#88f7ef 0%, #d8e0df 80%) no-repeat 50% 50% / 100% 100%;
+/* background: linear-gradient(#88f7ef 0%, #d8e0df 80%) no-repeat 50% 50% / 100% 100%; */
 border-radius: 4px;
 width: 50px;
+}
+.observable button{
+  /* background: linear-gradient(#f7c788 0%, #d9e9cf 80%) no-repeat 50% 50% / 100% 100%; */
 }

@@ -1,82 +1,68 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { Observable, Observer, fromEvent, empty } from 'rxjs';
-import { TimeSpan, FromSeconds } from 'timespan';
+import { Observable,  fromEvent, interval, timer, of } from 'rxjs';
+import { merge, flatMap, takeUntil, scan, map, switchMap, tap, reduce, takeLast, startWith } from 'rxjs/operators';
+
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
+
 export class AppComponent implements OnInit, OnDestroy {
-  title = 0;
-  disable = false;
-  timer: any;
+  timerValue = 0;
+  timerValueSecond = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
+  timerValueMinute = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
+  timerValueHour = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
+  timer$: Observable<any>;
 
-  time = Observable.create((observer: Observer<any>) => {
-    this.timer = setInterval(() => {
-      observer.next(this.title++);
-    }, 1000);
 
-    setTimeout(() => {
-      observer.error('this does not work');
-      observer.complete();
-    }, 0);
-  });
-
-  regTimer() {
-    // this.title = this.ts;
+  ngOnInit() {
   }
 
   startTimer() {
-    this.time.subscribe(
-      (value: number) => { this.title = value; }
-    );
-    this.disable = true;
-  }
 
-  resetTimer() {
-    this.title = 0;
-    clearInterval(this.timer);
-    this.disable = false;
-  }
+    const startButton$ = fromEvent(document.getElementById('start'), 'click');
+    const stopButton$ = fromEvent(document.getElementById('stop'), 'click');
+    const resetButton$ = fromEvent(document.getElementById('reset'), 'click');
+    const waitButton$ = fromEvent(document.getElementById('wait'), 'click');
 
-  stopTimer() {
-    this.title = this.title;
-    clearInterval(this.timer);
-    this.disable = false;
-  }
+    this.timer$ = of()
+      .pipe(
+        merge(
+          interval(1000).pipe(
+            takeUntil(stopButton$),
+            takeUntil(resetButton$),
+            takeUntil(waitButton$),
+            map(() => 1),
+          ),
+          resetButton$.pipe(map(() => 0)),
+          waitButton$.pipe(
+            takeLast(1),
+            map(() => 0)
+          ),
+        ),
+        scan((acc: number, val: number) => val === 0 ? 0 : acc + val),
+        tap(val => console.log('scan', val)),
+      );
 
-  waitTimer() {
-    this.title = this.title;
-    clearInterval(this.timer);
-    // this.disable = false;
-  }
+    this.timer$.subscribe((value: number) => {
+      this.timerValue = value;
+      this.timerValueSecond = (this.timerValue % 60) < 10 ? '0' + (this.timerValue % 60) : (this.timerValue % 60);
 
-  ngOnInit() {
+      this.timerValueMinute = Math.floor((this.timerValue / 60) % 60);
+      this.timerValueMinute = this.timerValueMinute < 10 ? '0' + this.timerValueMinute : this.timerValueMinute;
+
+
+      this.timerValueHour = Math.floor(this.timerValue / 3600);
+      this.timerValueHour = this.timerValueHour < 10 ? '0' + this.timerValueHour : this.timerValueHour;
+    });
+
 
   }
 
   ngOnDestroy() {
-    // this.time = empty();
+
   }
-
-
-
-
-  // startTimer() {
-  //   this.time.subscribe(
-  //     (value: number) => { this.title = value; },
-  //     (error: string) => { console.log(error); },
-  //     () => { console.log('completed'); }
-  //   );
-  // }
-
-  // startTime = fromEvent(this.startBtn, 'click');
-  // stopTime = fromEvent(this.stopBtn, 'click');
-  // waitTime = fromEvent(this.waitBtn, 'click');
-  // resetTime = fromEvent(this.resetBtn, 'click');
-
-
-
 }
