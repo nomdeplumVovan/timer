@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { Observable, fromEvent, interval, timer, of } from 'rxjs';
-import { merge, takeUntil, scan, map, switchMap, tap, bufferTime } from 'rxjs/operators';
-import { takeLast, exhaustMap, take, skip, filter } from 'rxjs/operators';
+import { Observable, fromEvent, interval, timer, of, } from 'rxjs';
+import { merge, takeUntil, scan, map, switchMap, tap, bufferTime, buffer, startWith } from 'rxjs/operators';
+import { takeLast, exhaustMap, take, skip, filter, skipUntil, flatMap } from 'rxjs/operators';
 import { padZero } from '../utils';
 
 @Component({
@@ -32,37 +32,43 @@ export class AppComponent implements OnInit, OnDestroy {
     const stopButton$ = fromEvent(document.getElementById('stop'), 'click');
     const resetButton$ = fromEvent(document.getElementById('reset'), 'click');
     const waitButton$ = fromEvent(document.getElementById('wait'), 'click');
-// -------------- wait---------
+
+    // -------------- wait---------
+
     const waitButton = waitButton$.pipe(exhaustMap(() =>
       waitButton$.pipe(take(2), takeUntil(interval(300)),
-        tap(val => console.log('wait', val))),
-    ));
+        tap(val => console.log('wait', val)))));
+
+    const stopButton = startButton$.pipe(
+      exhaustMap(() => stopButton$.pipe(
+        take(1),
+        tap(val => console.log('stop', val)))));
+
+    const startButton = startButton$.pipe(
+      switchMap(() => timer(this.timerValue === 0 ? 0 : this.timerValue, 1000)),
+      // startWith(this.timerValue === 0 ? 0 : this.timerValue),
+      tap(val => console.log('timer', val)));
+
+
+
 
     this.timer$ = of()
       .pipe(
         merge(
-          startButton$.pipe(
-            switchMap(() => interval(1000)),
-            takeUntil(stopButton$),
+          startButton.pipe(
             takeUntil(resetButton$),
             takeUntil(waitButton),
+            takeUntil(stopButton),
             map(() => 1),
           ),
-          stopButton$.pipe(
-            takeLast(1),
-            map(() => 1)
-          ),
           resetButton$.pipe(
-            map(() => 0)
-          ),
-
-          waitButton$.pipe(
-            takeLast(1),
-            map(() => 0))
+            tap(val => console.log('reset', val)),
+            map(() => 0),
+          )
         ),
 
         scan((acc: number, val: number) => val === 0 ? 0 : acc + val),
-        tap(val => console.log('scan', val)),
+        // tap(val => console.log('scan', val)),
       );
 
     this.timer$.subscribe((value: number) => {
