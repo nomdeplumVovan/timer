@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { Observable, fromEvent, interval, timer, of } from 'rxjs';
-import { merge, takeUntil, scan, map, switchMap, tap } from 'rxjs/operators';
-import {  takeLast, auditTime, debounceTime, skip } from 'rxjs/operators';
+import { merge, takeUntil, scan, map, switchMap, tap, buffer } from 'rxjs/operators';
+import { takeLast, auditTime, debounceTime, skip, skipUntil } from 'rxjs/operators';
+import { padZero } from '../utils';
 
 @Component({
   selector: 'app-root',
@@ -12,25 +13,33 @@ import {  takeLast, auditTime, debounceTime, skip } from 'rxjs/operators';
 
 export class AppComponent implements OnInit, OnDestroy {
   timerValue = 0;
-  timerValueSecond = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
-  timerValueMinute = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
-  timerValueHour = this.timerValue < 10 ? '0' + this.timerValue : this.timerValue;
   timer$: Observable<any>;
 
+  /*
+
+  Angular 2+
+  Реализовать таймер, который подсчитывает время в формате «HH: MM: SS»
+  Таймер должен иметь следующие кнопки:
+  * «Start / Stop» - запуск / остановка отсчета времени,
+  * «Wait» - с последующим быстрым нажатием (время между нажатиями не более 300 мс) таймер должен прекратить отсчет времени,
+  * «Reset» - сброс таймера на 0
+  Требование: используйте Observables в коде.
+
+  */
 
   startTimer() {
     const startButton$ = fromEvent(document.getElementById('start'), 'click');
     const stopButton$ = fromEvent(document.getElementById('stop'), 'click');
     const resetButton$ = fromEvent(document.getElementById('reset'), 'click');
     const waitButton$ = fromEvent(document.getElementById('wait'), 'click')
-      .pipe( skip(1),
-       tap(val => console.log('wait', val)),
-        // takeUntil(timer(300))
-        );
-
+      .pipe(
+        skip(1),
+        tap(val => console.log('wait', val)),
+      );
 
     this.timer$ = of()
       .pipe(
+
         merge(
           startButton$.pipe(
             switchMap(() => interval(1000)),
@@ -46,6 +55,7 @@ export class AppComponent implements OnInit, OnDestroy {
           resetButton$.pipe(
             map(() => 0)
           ),
+
           waitButton$.pipe(
             takeLast(1),
             map(() => 0))
@@ -57,18 +67,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.timer$.subscribe((value: number) => {
       this.timerValue = value;
-      this.timerValueSecond = (this.timerValue % 60) < 10 ? '0' + (this.timerValue % 60) : (this.timerValue % 60);
-
-      this.timerValueMinute = Math.floor((this.timerValue / 60) % 60);
-      this.timerValueMinute = this.timerValueMinute < 10 ? '0' + this.timerValueMinute : this.timerValueMinute;
-
-
-      this.timerValueHour = Math.floor(this.timerValue / 3600);
-      this.timerValueHour = this.timerValueHour < 10 ? '0' + this.timerValueHour : this.timerValueHour;
     });
   }
 
+  getTimerSeconds() {
+    return padZero(this.timerValue % 60);
+  }
 
+  getTimerMinutes() {
+    return padZero(Math.floor(this.timerValue / 60) % 60);
+  }
+
+  getTimerHours() {
+    return padZero(Math.floor(this.timerValue / 3600));
+  }
 
   ngOnInit() {
     // this.startTimer();
