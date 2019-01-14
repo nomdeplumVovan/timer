@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { Observable, fromEvent, interval, timer, of } from 'rxjs';
-import { merge, takeUntil, scan, map, switchMap, tap, buffer } from 'rxjs/operators';
-import { takeLast, auditTime, debounceTime, skip, skipUntil } from 'rxjs/operators';
+import { merge, takeUntil, scan, map, switchMap, tap, bufferTime } from 'rxjs/operators';
+import { takeLast, exhaustMap, take, skip, filter } from 'rxjs/operators';
 import { padZero } from '../utils';
 
 @Component({
@@ -31,21 +31,21 @@ export class AppComponent implements OnInit, OnDestroy {
     const startButton$ = fromEvent(document.getElementById('start'), 'click');
     const stopButton$ = fromEvent(document.getElementById('stop'), 'click');
     const resetButton$ = fromEvent(document.getElementById('reset'), 'click');
-    const waitButton$ = fromEvent(document.getElementById('wait'), 'click')
-      .pipe(
-        skip(1),
-        tap(val => console.log('wait', val)),
-      );
+    const waitButton$ = fromEvent(document.getElementById('wait'), 'click');
+// -------------- wait---------
+    const waitButton = waitButton$.pipe(exhaustMap(() =>
+      waitButton$.pipe(take(2), takeUntil(interval(300)),
+        tap(val => console.log('wait', val))),
+    ));
 
     this.timer$ = of()
       .pipe(
-
         merge(
           startButton$.pipe(
             switchMap(() => interval(1000)),
             takeUntil(stopButton$),
             takeUntil(resetButton$),
-            takeUntil(waitButton$),
+            takeUntil(waitButton),
             map(() => 1),
           ),
           stopButton$.pipe(
