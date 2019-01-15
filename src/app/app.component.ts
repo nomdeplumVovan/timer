@@ -38,6 +38,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const waitButton = waitButton$.pipe(exhaustMap(() =>
       waitButton$.pipe(take(2), takeUntil(interval(300)),
         // tap(val => console.log('wait', val))
+        // map(() => 0)
         )));
 
     const startButton = startButton$.pipe(
