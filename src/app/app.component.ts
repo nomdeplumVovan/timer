@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { Observable, fromEvent, interval, timer, of, } from 'rxjs';
-import { merge, takeUntil, scan, map, switchMap, tap, bufferTime, buffer, startWith } from 'rxjs/operators';
-import { takeLast, exhaustMap, take, skip, filter, skipUntil, flatMap } from 'rxjs/operators';
+import { merge, takeUntil, scan, map, switchMap, tap, bufferTime, buffer, startWith, ignoreElements } from 'rxjs/operators';
+import { flatMap, exhaustMap, take, throttle, filter, skipUntil, distinctUntilChanged } from 'rxjs/operators';
 import { padZero } from '../utils';
 
 @Component({
@@ -14,7 +14,7 @@ import { padZero } from '../utils';
 export class AppComponent implements OnInit, OnDestroy {
   timerValue = 0;
   timer$: Observable<any>;
-
+  
   /*
 
   Angular 2+
@@ -37,34 +37,29 @@ export class AppComponent implements OnInit, OnDestroy {
 
     const waitButton = waitButton$.pipe(exhaustMap(() =>
       waitButton$.pipe(take(2), takeUntil(interval(300)),
-        tap(val => console.log('wait', val)))));
-
-    const stopButton = startButton$.pipe(
-      exhaustMap(() => stopButton$.pipe(
-        take(1),
-        tap(val => console.log('stop', val)))));
+        // tap(val => console.log('wait', val))
+        )));
 
     const startButton = startButton$.pipe(
-      switchMap(() => timer(this.timerValue === 0 ? 0 : this.timerValue, 1000)),
-      // startWith(this.timerValue === 0 ? 0 : this.timerValue),
-      tap(val => console.log('timer', val)));
+      switchMap(() => timer(this.timerValue, 1000)),
+      // tap(val => console.log('timer', val))
+      );
 
-
-
-
-    this.timer$ = of()
+    this.timer$ = of(this.timerValue)
       .pipe(
         merge(
           startButton.pipe(
             takeUntil(resetButton$),
             takeUntil(waitButton),
-            takeUntil(stopButton),
+            takeUntil(stopButton$),
             map(() => 1),
+            // tap(val => console.log('start', val))
           ),
           resetButton$.pipe(
-            tap(val => console.log('reset', val)),
+            // tap(val => console.log('reset', val)),
             map(() => 0),
-          )
+          ),
+
         ),
 
         scan((acc: number, val: number) => val === 0 ? 0 : acc + val),
@@ -75,6 +70,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.timerValue = value;
     });
   }
+
 
   getTimerSeconds() {
     return padZero(this.timerValue % 60);

@@ -8,12 +8,11 @@
     <p>Observable</p>
   </div>
   <div class="timer-setting observable">
-    <!-- <button  id="on" (click)='startTimer()'>on</button> -->
-    <button id="start" (click)='startTimer()'>start</button>
-    <button id="stop"> stop</button>
+    <!-- <button id="on"  [disabled]='onDisabled'>On</button> -->
+    <button id="start" (click)='startTimer()' >start</button>
+    <button id="stop" > stop</button>
     <button id="wait"> wait</button>
     <button id="reset">reset</button>
   </div>
   <p> Start - two clicks or doubleclick</p>
-  <p> Wait - two clicks interval < 300ms</p>
-</main>
+  <p> Wait - two clicks interval < 300ms</p> </main>
